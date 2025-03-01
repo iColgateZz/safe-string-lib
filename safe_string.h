@@ -2,14 +2,8 @@
 
 /* Include libs */
 #include <stdint.h>
-#include <stdlib.h>
 
 /* Definitions */
-#define H_TYPE_8 0
-#define H_TYPE_16 1
-#define H_TYPE_32 2
-#define H_TYPE_64 3
-#define H_MASK 3
 
 typedef char* string;
 
@@ -44,3 +38,6 @@ typedef struct Header64 {
 /* Exposed functions */
 string snew(const char*);
 string snewlen(const char*, size_t);
+void sfree(string);
+static inline 
+size_t sgetlen(string);
