@@ -36,8 +36,10 @@ typedef struct Header64 {
 } Header64;
 
 /* Exposed functions */
+
 string snew(const char*);
 string snewlen(const char*, size_t);
 void sfree(string);
 static inline 
 size_t sgetlen(string);
+void supdatelen(string);

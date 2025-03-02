@@ -13,7 +13,7 @@
 #define H_TYPE_64 3
 #define H_MASK 3
 
-#define HDR(T, s) ((struct Header##T *)((s)-(sizeof(struct Header##T))))
+#define HDR(T, s) ((Header##T *)(s - sizeof(Header##T)))
 
 /* Functions */
 
@@ -45,7 +45,52 @@ uint8_t getHlen(uint8_t type) {
             return sizeof(Header64);
     }
     return 0;
-} 
+}
+
+static inline
+size_t sgetalloc(const string s) {
+    if (s == NULL) return 0;
+    uint8_t flag = s[-1];
+    switch (flag & H_MASK) {
+        case H_TYPE_8:
+            return HDR(8, s)->allocated;
+        case H_TYPE_16:
+            return HDR(16, s)->allocated;
+        case H_TYPE_32:
+            return HDR(32, s)->allocated;
+        case H_TYPE_64:
+            return HDR(64, s)->allocated;
+    }
+    return 0;
+}
+
+static inline
+void ssetlen(string s, size_t len) {
+    uint8_t flag = s[-1];
+    switch (flag & H_MASK) {
+        case H_TYPE_8:
+        {
+            HDR(8, s)->len = len;
+            break;
+        }
+        case H_TYPE_16:
+        {
+            HDR(16, s)->len = len;
+            break;
+        }
+        case H_TYPE_32:
+        {
+            HDR(32, s)->len = len;
+            break;
+        }
+        case H_TYPE_64:
+        {
+            HDR(64, s)->len = len;
+            break;
+        }
+    }
+    return;
+}
 
 /*
     Create a new null-terminated string with length ilen.
@@ -108,7 +153,8 @@ string snewlen(const char* input, size_t ilen) {
 /*
     Create a new null-terminated string.
     Input should be null-terminated.
-    If input string is NULL, NULL is returned.
+    If input string is NULL, NULL is returned 
+    and no memory allocation is performed.
 */
 string snew(const char* input) {
     if (input == NULL) return NULL;
@@ -148,4 +194,14 @@ size_t sgetlen(const string s) {
             return HDR(64, s)->len;
     }
     return 0;
+}
+
+/*
+    Update the lenght of a string in case you changed it manually.
+    If NULL is passed as an argument, nothing is done.
+*/
+void supdatelen(string s) {
+    if (s == NULL) return;
+    ssetlen(s, strlen(s));
+    return;
 }
