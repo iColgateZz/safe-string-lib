@@ -95,6 +95,7 @@ void ssetlen(string s, size_t len) {
 /*
     Create a new null-terminated string with length ilen.
     If input string is NULL, a buffer of length ilen is initialized with zero bytes.
+    Might return NULL if malloc fails.
 */
 string snewlen(const char* input, size_t ilen) {
     void* h;
@@ -179,7 +180,6 @@ void sfree(string s) {
     the string is changed manually or via functions from the
     standard libraries. In order to update the length use supdatelen().
 */
-static inline
 size_t sgetlen(const string s) {
     if (s == NULL) return 0;
     uint8_t flag = s[-1];
@@ -204,4 +204,12 @@ void supdatelen(string s) {
     if (s == NULL) return;
     ssetlen(s, strlen(s));
     return;
+}
+
+/*
+    Create a duplicate of the given null-terminated string.
+    Might return NULL if malloc fails.
+*/
+string sdup(const string s) {
+    return snewlen(s, sgetlen(s));
 }

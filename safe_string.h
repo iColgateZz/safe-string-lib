@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 /* Definitions */
+#ifndef SAFE_STRING_H
+#define SAFE_STRING_H
 
 typedef char* string;
 
@@ -40,6 +42,8 @@ typedef struct Header64 {
 string snew(const char*);
 string snewlen(const char*, size_t);
 void sfree(string);
-static inline 
 size_t sgetlen(string);
 void supdatelen(string);
+string sdup(const string);
+
+#endif 
