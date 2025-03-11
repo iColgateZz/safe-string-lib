@@ -92,10 +92,40 @@ void ssetlen(string s, size_t len) {
     return;
 }
 
+static inline
+void ssetalloc(string s, size_t newalloc) {
+    uint8_t flag = s[-1];
+    switch (flag & H_MASK) {
+        case H_TYPE_8:
+        {
+            HDR(8, s)->allocated = newalloc;
+            break;
+        }
+        case H_TYPE_16:
+        {
+            HDR(16, s)->allocated = newalloc;
+            break;
+        }
+        case H_TYPE_32:
+        {
+            HDR(32, s)->allocated = newalloc;
+            break;
+        }
+        case H_TYPE_64:
+        {
+            HDR(64, s)->allocated = newalloc;
+            break;
+        }
+    }
+    return;
+}
+
 /*
     Create a new null-terminated string with length ilen.
     If input string is NULL, a buffer of length ilen is initialized with zero bytes.
-    Might return NULL if malloc fails.
+    Return NULL if malloc fails.
+    Return NULL if ilen causes overflow.
+    ilen > strlen(input) causes undefined behaviour.
 */
 string snewlen(const char* input, size_t ilen) {
     void* h;
@@ -104,10 +134,12 @@ string snewlen(const char* input, size_t ilen) {
     uint8_t hlen = getHlen(type);
     uint8_t* flag;
     
+    if (hlen + ilen + 1 < ilen) return NULL;
+
     h = malloc(hlen + ilen + 1);
     if (h == NULL) return NULL;
-    if (input == NULL) memset(h, 0, ilen);
-    str = (string)h + hlen;
+    if (input == NULL) memset(h, 0, hlen + ilen + 1);
+    str = (string)((uint8_t*)h + hlen);
     flag = (uint8_t*)str - 1;
 
     switch(type) {
@@ -156,6 +188,7 @@ string snewlen(const char* input, size_t ilen) {
     Input should be null-terminated.
     If input string is NULL, NULL is returned 
     and no memory allocation is performed.
+    Return NULL if input causes overflow.
 */
 string snew(const char* input) {
     if (input == NULL) return NULL;
@@ -208,8 +241,41 @@ void supdatelen(string s) {
 
 /*
     Create a duplicate of the given null-terminated string.
-    Might return NULL if malloc fails.
+    Return NULL if malloc fails.
+    Return NULL if string causes overflow.
 */
 string sdup(const string s) {
     return snewlen(s, sgetlen(s));
+}
+
+string sjoin(size_t n, const char** str, size_t seplen, const char* sep) {
+    size_t curlen = 0;
+    for (size_t i = 0; i < n; i++) {
+        size_t len = strlen(str[i]);
+        if (curlen + len + 1 < curlen)
+            return NULL;
+        curlen += len;
+    }
+    size_t slen = curlen + (n - 1) * seplen;
+    if (slen < curlen)
+        return NULL;
+
+    string s = snewlen(NULL, slen);
+    if (s == NULL)
+        return NULL;
+
+    char* p = s;
+    for (size_t i = 0; i < n; i++) {
+        size_t len = strlen(str[i]);
+        memcpy(p, str[i], len);
+        p += len;
+        memcpy(p, sep, seplen);
+        p += seplen;
+    }
+    s[slen] = 0;
+    return s;
+}
+
+string sjoins(size_t n, const string* str, size_t seplen, const char* sep) {
+    return NULL;
 }
