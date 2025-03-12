@@ -122,6 +122,7 @@ void ssetalloc(string s, size_t newalloc) {
 
 /*
     Create a new null-terminated string with length ilen.
+
     If input string is NULL, a buffer of length ilen is initialized with zero bytes.
     Return NULL if malloc fails.
     Return NULL if ilen causes overflow.
@@ -185,7 +186,8 @@ string snewlen(const char* input, size_t ilen) {
 
 /*
     Create a new null-terminated string.
-    Input should be null-terminated.
+
+    Input must be null-terminated.
     If input string is NULL, NULL is returned 
     and no memory allocation is performed.
     Return NULL if input causes overflow.
@@ -198,6 +200,7 @@ string snew(const char* input) {
 
 /*
     Free the allocated memory.
+
     If input is NULL, do nothing.
 */
 void sfree(string s) {
@@ -208,6 +211,7 @@ void sfree(string s) {
 
 /*
     Get the length stored in the header.
+
     If input is NULL, return 0.
     It might differ from the actual length of the string if
     the string is changed manually or via functions from the
@@ -231,6 +235,7 @@ size_t sgetlen(const string s) {
 
 /*
     Update the lenght of a string in case you changed it manually.
+
     If NULL is passed as an argument, nothing is done.
 */
 void supdatelen(string s) {
@@ -241,6 +246,7 @@ void supdatelen(string s) {
 
 /*
     Create a duplicate of the given null-terminated string.
+
     Return NULL if malloc fails.
     Return NULL if string causes overflow.
 */
@@ -248,7 +254,19 @@ string sdup(const string s) {
     return snewlen(s, sgetlen(s));
 }
 
-string sjoin(size_t n, const char** str, size_t seplen, const char* sep) {
+/*
+    Join n C-strings together with separators of length seplen.
+
+    Strings and separator must be null-terminated.
+    If n does not match the amount of elements in the char** str array or
+    seplen is not equal to the length of sep, behaviour is undefined.
+    Return NULL if input causes overflow.
+    Return NULL if malloc fails.
+    Return a new string in which the given ones are joined together.
+
+    This function is not byte-string safe.
+*/
+string sjoin(size_t n, const char* str[n], size_t seplen, const char* sep) {
     size_t curlen = 0;
     for (size_t i = 0; i < n; i++) {
         size_t len = strlen(str[i]);
@@ -276,6 +294,6 @@ string sjoin(size_t n, const char** str, size_t seplen, const char* sep) {
     return s;
 }
 
-string sjoins(size_t n, const string* str, size_t seplen, const char* sep) {
+string sjoins(size_t n, const string str[n], size_t seplen, const char* sep) {
     return NULL;
 }

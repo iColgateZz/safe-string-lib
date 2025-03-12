@@ -45,7 +45,7 @@ void sfree(string);
 size_t sgetlen(string);
 void supdatelen(string);
 string sdup(const string);
-string sjoin(size_t n, const char** str, size_t seplen, const char* sep);
-string sjoins(size_t n, const string* str, size_t seplen, const char* sep);
+string sjoin(size_t n, const char* str[n], size_t seplen, const char* sep);
+string sjoins(size_t n, const string str[n], size_t seplen, const char* sep);
 
 #endif 
