@@ -41,11 +41,13 @@ typedef struct Header64 {
 
 string snew(const char*);
 string snewlen(const char*, size_t);
-void sfree(string);
-size_t sgetlen(string);
-void supdatelen(string);
+void sfree(const string);
+size_t sgetlen(const string);
+void supdatelen(const string);
 string sdup(const string);
-string sjoin(size_t n, const char* str[n], size_t seplen, const char* sep);
-string sjoins(size_t n, const string str[n], size_t seplen, const char* sep);
+string sjoin(size_t n, const char* str[n], size_t, const char*);
+string sjoins(size_t n, const string str[n], size_t, const char*);
+string scat(const char*, const char*);
+string scats(const string s1, const string s2);
 
 #endif 

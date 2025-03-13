@@ -2,6 +2,7 @@
 #include "safe_string.h"
 #include <string.h>
 #include <limits.h>
+#include <stdlib.h>
 
 int test_count = 0;
 int fail_count = 0;
@@ -134,7 +135,7 @@ void test_sjoin_as_intended(void) {
     arr[0] = "string";
     arr[1] = "is";
     arr[2] = "long";
-    string s = sjoin(3, arr, 3, "///");
+    string s = sjoin(3, (const char**) arr, 3, "///");
     assert_equal(s != NULL, "Expected non-NULL string", __func__);
     assert_equal(strncmp("string///is///long", s, 19) == 0, "The strings must be equal 1", __func__);
     assert_equal(sgetlen(s) == 18, "Length must be equal", __func__);
@@ -147,19 +148,145 @@ void test_sjoin_no_sep(void) {
     arr[1] = "is";
     arr[2] = "long";
     size_t slen = 12;
-    string s = sjoin(3, arr, 0, "");
+    string s = sjoin(3, (const char**) arr, 0, "");
     assert_equal(s != NULL, "Expected non-NULL string", __func__);
     assert_equal(strncmp("stringislong", s, slen + 1) == 0, "The strings must be equal 1", __func__);
     assert_equal(sgetlen(s) == slen, "Length must be equal", __func__);
     sfree(s);
 }
 
+void test_sjoin_null_sep(void) {
+    char* arr[3];
+    arr[0] = "string";
+    arr[1] = "is";
+    arr[2] = "long";
+    string s = sjoin(3, (const char**) arr, 0, NULL);
+    assert_equal(s == NULL, "NULL expected", __func__);
+}
+
+void test_sjoin_null_strings(void) {
+    char* arr[3];
+    arr[0] = "string";
+    arr[1] = "is";
+    arr[2] = NULL;
+    string s = sjoin(3, (const char**) arr, 2, "aa");
+    assert_equal(s == NULL, "NULL expected", __func__);
+}
+
+void test_sjoin_small_n(void) {
+    string s = sjoin(0, NULL, 0, "aaa");
+    assert_equal(s == NULL, "NULL expected", __func__);
+}
+
 void test_sjoin_overflow(void) {
     char* arr[2];
     arr[0] = "string";
     arr[1] = "string";
-    string s = sjoin(2, arr, SIZE_T_MAX, "LOL");
+    string s = sjoin(2, (const char**) arr, SIZE_T_MAX, "LOL");
     assert_equal(s == NULL, "String must be NULL after overflow", __func__);
+}
+
+void test_sjoins_as_intended(void) {
+    string* arr = malloc(3 * sizeof(string));
+    arr[0] = snew("string");
+    arr[1] = snew("is");
+    arr[2] = snew("long");
+    string s = sjoins(3, (const string*) arr, 3, "///");
+    assert_equal(s != NULL, "Expected non-NULL string", __func__);
+    assert_equal(strncmp("string///is///long", s, 19) == 0, "The strings must be equal", __func__);
+    assert_equal(sgetlen(s) == 18, "Length must be equal", __func__);
+    sfree(s);
+    for (int i = 0; i < 3; i++)
+        sfree(arr[i]);
+    free(arr);
+}
+
+void test_sjoins_no_sep(void) {
+    string* arr = malloc(3 * sizeof(string));
+    arr[0] = snew("string");
+    arr[1] = snew("is");
+    arr[2] = snew("long");
+    string s = sjoins(3, (const string*) arr, 0, "");
+    assert_equal(s != NULL, "Expected non-NULL string", __func__);
+    assert_equal(strncmp("stringislong", s, 13) == 0, "The strings must be equal", __func__);
+    assert_equal(sgetlen(s) == 12, "Length must be equal", __func__);
+    sfree(s);
+    for (int i = 0; i < 3; i++)
+        sfree(arr[i]);
+    free(arr);
+}
+
+void test_sjoins_null_sep(void) {
+    string* arr = malloc(3 * sizeof(string));
+    arr[0] = snew("string");
+    arr[1] = snew("is");
+    arr[2] = snew("long");
+    string s = sjoins(3, (const string*) arr, 0, NULL);
+    assert_equal(s == NULL, "NULL expected", __func__);
+    for (int i = 0; i < 3; i++)
+        sfree(arr[i]);
+    free(arr);
+}
+
+void test_sjoins_null_strings(void) {
+    string* arr = malloc(3 * sizeof(string));
+    arr[0] = snew("string");
+    arr[1] = snew("is");
+    arr[2] = NULL;
+    string s = sjoins(3, (const string*) arr, 2, "aa");
+    assert_equal(s == NULL, "NULL expected", __func__);
+    for (int i = 0; i < 2; i++)
+        sfree(arr[i]);
+    free(arr);
+}
+
+void test_sjoins_small_n(void) {
+    string s = sjoins(0, NULL, 0, "aaa");
+    assert_equal(s == NULL, "NULL expected", __func__);
+}
+
+void test_sjoins_overflow(void) {
+    string* arr = malloc(2 * sizeof(string));
+    arr[0] = snew("string");
+    arr[1] = snew("string");
+    string s = sjoins(2, arr, SIZE_T_MAX, "LOL");
+    assert_equal(s == NULL, "String must be NULL after overflow", __func__);
+}
+
+void test_scat_as_intended(void) {
+    char* s1 = "Hello";
+    char* s2 = "World";
+    string s = scat(s1, s2);
+    assert_equal(s != NULL, "String must not be NULL", __func__);
+    assert_equal(strncmp("HelloWorld", s, 11) == 0, "Strings must be equal", __func__);
+    assert_equal(sgetlen(s) == 10, "Length is wrong", __func__);
+    assert_equal(s[10] == 0, "String must be null-terminated", __func__);
+    sfree(s);
+}
+
+void test_scat_null_passed(void) {
+    string s = scat("Hello", NULL);
+    assert_equal(s == NULL, "String must be NULL", __func__);
+}
+
+void test_scats_as_intended(void) {
+    string s1 = snew("abc");
+    string s2 = snew("def");
+    string s = scats(s1, s2);
+    assert_equal(s != NULL, "String must not be NULL", __func__);
+    assert_equal(strncmp("abcdef", s, 7) == 0, "Strings must be equal", __func__);
+    assert_equal(sgetlen(s) == 6, "Length is wrong", __func__);
+    assert_equal(s[6] == 0, "String must be null-terminated", __func__);
+    sfree(s);
+    sfree(s1);
+    sfree(s2);
+}
+
+void test_scats_null_passed(void) {
+    string s1 = snew("abc");
+    string s = scats(NULL, s1);
+    assert_equal(s == NULL, "String must be NULL", __func__);
+    sfree(s1);
 }
 
 int main(void) {
@@ -184,7 +311,23 @@ int main(void) {
 
     test_sjoin_as_intended();
     test_sjoin_no_sep();
+    test_sjoin_null_sep();
+    test_sjoin_null_strings();
+    test_sjoin_small_n();
     test_sjoin_overflow();
+
+    test_sjoins_as_intended();
+    test_sjoins_no_sep();
+    test_sjoins_null_sep();
+    test_sjoins_null_strings();
+    test_sjoins_small_n();
+    test_sjoins_overflow();
+
+    test_scat_as_intended();
+    test_scat_null_passed();
+
+    test_scats_as_intended();
+    test_scats_null_passed();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {
