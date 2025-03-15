@@ -2,6 +2,7 @@
 
 /* Include libs */
 #include <stdint.h>
+#include <stdbool.h>
 
 /* Definitions */
 #ifndef SAFE_STRING_H
@@ -39,15 +40,22 @@ typedef struct Header64 {
 
 /* Exposed functions */
 
-string snew(const char*);
-string snewlen(const char*, size_t);
-void sfree(const string);
-size_t sgetlen(const string);
-void supdatelen(const string);
-string sdup(const string);
-string sjoin(size_t n, const char* str[n], size_t, const char*);
-string sjoins(size_t n, const string str[n], size_t, const char*);
-string scat(const char*, const char*);
+string snew(const char* input);
+string snewlen(const char* input, size_t ilen);
+void sfree(const string s);
+size_t sgetlen(const string s);
+void supdatelen(const string s);
+string sdup(const string s);
+string sjoin(size_t n, const char* s[n], size_t plen, const char* pattern);
+string sjoins(size_t n, const string s[n], size_t plen, const char* pattern);
+string scat(const char* s1, const char* s2);
 string scats(const string s1, const string s2);
+void slower(string s);
+void supper(string s);
+bool sstartswith(string s, size_t plen, const char* pattern);
+bool sendswith(string s, size_t plen, const char* pattern);
+ssize_t sfind(string s, size_t plen, const char* pattern);
+ssize_t srfind(string s, size_t plen, const char* pattern);
+ssize_t scount(string s, size_t plen, const char* pattern);
 
 #endif 

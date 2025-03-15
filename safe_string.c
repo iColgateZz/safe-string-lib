@@ -7,6 +7,7 @@
 #include "safe_string.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 /* Definitions */
 #define H_TYPE_8 0
@@ -194,7 +195,7 @@ string snewlen(const char* input, size_t ilen) {
     and no memory allocation is performed.
     Return NULL if input causes overflow.
 
-    This function is not byte-string safe.
+    This function is not binary safe.
 */
 string snew(const char* input) {
     if (input == NULL) return NULL;
@@ -242,7 +243,7 @@ size_t sgetlen(const string s) {
 
     If NULL is passed as an argument, nothing is done.
 
-    This function is not byte-string safe.
+    This function is not binary safe.
 */
 void supdatelen(const string s) {
     if (s == NULL) return;
@@ -273,7 +274,7 @@ string sdup(const string s) {
     Return NULL if n < 2.
     Return a new string in which the given ones are joined together.
 
-    This function is not byte-string safe.
+    This function is not binary safe.
 */
 string sjoin(size_t n, const char* str[n], size_t seplen, const char* sep) {
     if (n < 2) return NULL;
@@ -362,7 +363,7 @@ string sjoins(size_t n, const string str[n], size_t seplen, const char* sep) {
     Return NULL if any of the strings is NULL.
     Return a new concatenated null-terminated string.
 
-    This function is not byte-string safe.
+    This function is not binary safe.
 */
 string scat(const char* s1, const char* s2) {
     if (s1 == NULL || s2 == NULL) return NULL;
@@ -402,14 +403,124 @@ string scats(const string s1, const string s2) {
     return s;
 }
 
-void supper();
-void slower();
-void trim();
-bool sstartswith();
-bool sendswith();
-size_t sfind();
-size_t srfind();
-size_t scount();
-void sreplace();
+/*
+    Change all characters to upper case.
 
+    Do nothing if string is NULL.
+*/
+void supper(string s) {
+    if (s == NULL) return;
+    for (size_t i = 0; i < sgetlen(s); i++)
+        s[i] = toupper(s[i]);
+    return;
+}
+
+/*
+    Change all characters to lower case.
+
+    Do nothing if string is NULL.
+*/
+void slower(string s) {
+    if (s == NULL) return;
+    for (size_t i = 0; i < sgetlen(s); i++)
+        s[i] = tolower(s[i]);
+    return;
+}
+
+/*
+    Check if a string starts with 'pattern'.
+
+    Return false if string or pattern is NULL.
+    Return false if plen > len(string).
+    Return false if plen is 0.
+    Behaviour is undefined if plen != len(pattern).
+*/
+bool sstartswith(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return false;
+    if (plen > sgetlen(s) || plen == 0)
+        return false;
+    return memcmp(s, pattern, plen) == 0;
+}
+
+/*
+    Check if a string ends with 'pattern'.
+
+    Return false if string or pattern is NULL.
+    Return false if plen > len(string).
+    Return false if plen is 0.
+    Behaviour is undefined if plen != len(pattern).
+*/
+bool sendswith(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return false;
+    if (plen > sgetlen(s) || plen == 0)
+        return false;
+    return memcmp(s + sgetlen(s) - plen, pattern, plen) == 0;
+}
+
+/*
+    Find the starting index of the first substring matching the 'pattern'.
+
+    Return -1 if s or pattern is NULL.
+    Return -1 if plen > len(s).
+    Return -1 if plen == 0.
+    Behaviour is undefined if plen != len(pattern).
+*/
+ssize_t sfind(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return -1;
+    if (plen > sgetlen(s) || plen == 0)
+        return -1;
+    for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
+        if (memcmp(s + idx, pattern, plen) == 0)
+            return idx;
+    }
+    return -1;
+}
+
+/*
+    Find the starting index of the last (right) substring matching the 'pattern'.
+
+    Return -1 if s or pattern is NULL.
+    Return -1 if plen > len(s).
+    Return -1 if plen == 0.
+    Behaviour is undefined if plen != len(pattern).
+*/
+ssize_t srfind(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return -1;
+    if (plen > sgetlen(s) || plen == 0)
+        return -1;
+    for (ssize_t idx = sgetlen(s) - plen; idx >= 0; idx--) {
+        if (memcmp(s + idx, pattern, plen) == 0)
+            return idx;
+    }
+    return -1;
+}
+
+/*
+    Count the amount of substrings matching 'pattern'.
+
+    Return -1 if s or pattern is NULL.
+    Return -1 if plen > len(s).
+    Return -1 if plen == 0.
+    Behaviour is undefined if plen != len(pattern).
+*/
+ssize_t scount(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return -1;
+    if (plen > sgetlen(s) || plen == 0)
+        return -1;
+    size_t count = 0;
+    for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
+        if (memcmp(s + idx, pattern, plen) == 0)
+            count++;
+    }
+    return count;
+}
+
+void sreplace(void);
+void sremove(string s, size_t plen, const char* pattern);
+void trim(string s, size_t plen, const char* pattern);
 string* ssplit(const string s, size_t seplen, char* sep);

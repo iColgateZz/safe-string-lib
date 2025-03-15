@@ -251,6 +251,10 @@ void test_sjoins_overflow(void) {
     arr[1] = snew("string");
     string s = sjoins(2, arr, SIZE_T_MAX, "LOL");
     assert_equal(s == NULL, "String must be NULL after overflow", __func__);
+    for (int i = 0; i < 2; i++) {
+        sfree(arr[i]);
+    }
+    free(arr);
 }
 
 void test_scat_as_intended(void) {
@@ -287,6 +291,235 @@ void test_scats_null_passed(void) {
     string s = scats(NULL, s1);
     assert_equal(s == NULL, "String must be NULL", __func__);
     sfree(s1);
+}
+
+void test_supper_as_intended(void) {
+    string s = snew("abc");
+    supper(s);
+    assert_equal(strncmp("ABC", s, 4) == 0, "Strings must be converted to upper case", __func__);
+    assert_equal(s[3] == 0, "Must be null-terminated", __func__);
+    sfree(s);
+}
+
+void test_supper_null_passed(void) {
+    supper(NULL);
+}
+
+void test_supper_weird_strings(void) {
+    string s = snew("01234");
+    supper(s);
+    assert_equal(strncmp("01234", s, 6) == 0, "Strings must be equal 1", __func__);
+    assert_equal(s[5] == '\0', "Must be null-terminated", __func__);
+    sfree(s);
+
+    string l = snew("?><.");
+    supper(l);
+    assert_equal(strncmp("?><.", l, 5) == 0, "Strings must be equal 2", __func__);
+    assert_equal(l[4] == '\0', "Must be null-terminated", __func__);
+    sfree(l);
+
+    const char binaryData[] = {0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0xFF, 0xFE};
+    string b = snewlen(binaryData, sizeof(binaryData));
+    supper(b);
+    assert_equal(memcmp("HELLO\0\xFF\xFE", b, sizeof(binaryData) + 1) == 0, "Strings must be equal 3", __func__);
+    assert_equal(b[sizeof(binaryData)] == '\0', "Must be null-terminated", __func__);
+    assert_equal(sgetlen(b) == sizeof(binaryData), "Length must match", __func__);
+    sfree(b);
+}
+
+void test_slower_as_intended(void) {
+    string s = snew("ABC");
+    slower(s);
+    assert_equal(strncmp("abc", s, 4) == 0, "Strings must be converted to lower case", __func__);
+    assert_equal(s[3] == 0, "Must be null-terminated", __func__);
+    sfree(s);
+}
+
+void test_slower_null_passed(void) {
+    slower(NULL);
+}
+
+void test_slower_weird_strings(void) {
+    string s = snew("01234");
+    slower(s);
+    assert_equal(strncmp("01234", s, 6) == 0, "Strings must be equal 1", __func__);
+    assert_equal(s[5] == '\0', "Must be null-terminated", __func__);
+    sfree(s);
+
+    string l = snew("?><.");
+    slower(l);
+    assert_equal(strncmp("?><.", l, 5) == 0, "Strings must be equal 2", __func__);
+    assert_equal(l[4] == '\0', "Must be null-terminated", __func__);
+    sfree(l);
+
+    const char binaryData[] = {0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0xFF, 0xFE};
+    string b = snewlen(binaryData, sizeof(binaryData));
+    slower(b);
+    assert_equal(memcmp("\x68\x65\x6c\x6c\x6f\x00\xff\xfe", b, sizeof(binaryData)) == 0, "Strings must be equal 3", __func__);
+    assert_equal(b[sizeof(binaryData)] == '\0', "Must be null-terminated", __func__);
+    assert_equal(sgetlen(b) == sizeof(binaryData), "Length must match", __func__);
+    sfree(b);
+}
+
+void test_sstartswith_null_input(void) {
+    string s = snew("abcdefghij");
+    assert_equal(s != NULL, "String must not be NULL", __func__);
+    assert_equal(sstartswith(s, 3, NULL) == false, "Must be false 1", __func__);
+    assert_equal(sstartswith(NULL, 3, "abc") == false, "Must be false 2", __func__);
+    sfree(s);
+}
+
+void test_sstartswith_invalid_len(void) {
+    string s = snew("abcdefghij");
+    assert_equal(s != NULL, "String must not be NULL", __func__);
+    assert_equal(sstartswith(s, 15, "abcdefghijklmop") == false, "Must be false", __func__);
+    assert_equal(sstartswith(s, 0, "abcdefghijklmop") == false, "Must be false", __func__);
+    sfree(s);
+}
+
+void test_sstartswith_as_intended(void) {
+    string s = snew("abcdefghij");
+    assert_equal(sstartswith(s, 3, "abc") == true, "Must start with 'abc'", __func__);
+    assert_equal(sstartswith(s, 3, "ABC") == false, "Must not start with 'ABC'", __func__);
+    sfree(s);
+
+    string b = snewlen("\xff\xfe\xef", 3);
+    assert_equal(sstartswith(b, 3, "\xff\xfe\xef") == true, "Must start with the same pattern", __func__);
+    assert_equal(sstartswith(b, 1, "\xff") == true, "Must start with the same pattern 2", __func__);
+    sfree(b);
+}
+
+void test_sendswith_null_input(void) {
+    string s = snew("abcdefghij");
+    assert_equal(s != NULL, "String must not be NULL", __func__);
+    assert_equal(sendswith(s, 3, NULL) == false, "Must be false 1", __func__);
+    assert_equal(sendswith(NULL, 3, "abc") == false, "Must be false 2", __func__);
+    sfree(s);
+}
+
+void test_sendswith_invalid_len(void) {
+    string s = snew("abcdefghij");
+    assert_equal(s != NULL, "String must not be NULL", __func__);
+    assert_equal(sendswith(s, 11, "abcdefghijklmop") == false, "Must be false", __func__);
+    assert_equal(sendswith(s, 0, "abcdefghijklmop") == false, "Must be false 2", __func__);
+    sfree(s);
+}
+
+void test_sendswith_as_intended(void) {
+    string s = snew("abcdefghij");
+    assert_equal(sendswith(s, 3, "hij") == true, "Must end with 'hij'", __func__);
+    assert_equal(sendswith(s, 3, "HIJ") == false, "Must not end with 'HIJ'", __func__);
+    sfree(s);
+
+    string b = snewlen("\xff\xfe\xef", 3);
+    assert_equal(sendswith(b, 3, "\xff\xfe\xef") == true, "Must end with the same pattern", __func__);
+    assert_equal(sendswith(b, 1, "\xef") == true, "Must end with the same pattern 2", __func__);
+    sfree(b);
+}
+
+void test_sfind_as_intended(void) {
+    string s = snew("abcdefghij");
+    assert_equal(sfind(s, 1, "j") == 9, "Pattern must be found 0", __func__);
+    assert_equal(sfind(s, 3, "abc") == 0, "Pattern must be found 1", __func__);
+    assert_equal(sfind(s, 3, "hij") == 7, "Pattern must be found 2", __func__);
+    assert_equal(sfind(s, 4, "defg") == 3, "Pattern must be found 3", __func__);
+    assert_equal(sfind(s, 10, "abcdefghij") == 0, "Pattern must be found 4", __func__);
+    assert_equal(sfind(s, 2, "lo") == -1, "Pattern must not be found", __func__);
+    sfree(s);
+
+    string b = snewlen("\xff\xfe\xef", 3);
+    assert_equal(sfind(b, 1, "\xff") == 0, "Pattern must be found 5", __func__);
+    assert_equal(sfind(b, 1, "\xef") == 2, "Pattern must be found 6", __func__);
+    assert_equal(sfind(b, 3, "\xff\xfe\xef") == 0, "Pattern must be found 7", __func__);
+    assert_equal(sfind(b, 3, "\xff\xfe\xff") == -1, "Pattern must not be found 2", __func__);
+    sfree(b);
+
+    string dup = snew("dupdup");
+    assert_equal(sfind(dup, 3, "dup") == 0, "Pattern must be found 8", __func__);
+    sfree(dup);
+}
+
+void test_sfind_null_input(void) {
+    assert_equal(sfind(NULL, 3, "LOL") == -1, "No matches expected", __func__);
+    string s = snew("string");
+    assert_equal(sfind(s, 3, NULL) == -1, "No matches expected", __func__);
+    sfree(s);
+}
+
+void test_sfind_invalid_len(void) {
+    string s = snew("abcde");
+    assert_equal(sfind(s, 0, "") == -1, "No matches expected", __func__);
+    assert_equal(sfind(s, 7, "aaaaaaa") == -1, "No matches expected", __func__);
+    sfree(s);
+}
+
+void test_srfind_as_intended(void) {
+    string s = snew("abcdefghij");
+    assert_equal(s != NULL, "Must not be NULL", __func__);
+    assert_equal(srfind(s, 1, "a") == 0, "Pattern must be found -1", __func__);
+    assert_equal(srfind(s, 1, "j") == 9, "Pattern must be found 0", __func__);
+    assert_equal(srfind(s, 3, "abc") == 0, "Pattern must be found 1", __func__);
+    assert_equal(srfind(s, 3, "hij") == 7, "Pattern must be found 2", __func__);
+    assert_equal(srfind(s, 4, "defg") == 3, "Pattern must be found 3", __func__);
+    assert_equal(srfind(s, 10, "abcdefghij") == 0, "Pattern must be found 4", __func__);
+    assert_equal(srfind(s, 2, "lo") == -1, "Pattern must not be found", __func__);
+    sfree(s);
+
+    string b = snewlen("\xff\xfe\xef", 3);
+    assert_equal(srfind(b, 1, "\xff") == 0, "Pattern must be found 5", __func__);
+    assert_equal(srfind(b, 1, "\xef") == 2, "Pattern must be found 6", __func__);
+    assert_equal(srfind(b, 3, "\xff\xfe\xef") == 0, "Pattern must be found 7", __func__);
+    assert_equal(srfind(b, 3, "\xff\xfe\xff") == -1, "Pattern must not be found 2", __func__);
+    sfree(b);
+
+    string dup = snew("dupdup");
+    assert_equal(srfind(dup, 3, "dup") == 3, "Pattern must be found 8", __func__);
+    sfree(dup);
+}
+
+void test_srfind_null_input(void) {
+    assert_equal(srfind(NULL, 3, "LOL") == -1, "No matches expected", __func__);
+    string s = snew("string");
+    assert_equal(srfind(s, 3, NULL) == -1, "No matches expected", __func__);
+    sfree(s);
+}
+
+void test_srfind_invalid_len(void) {
+    string s = snew("abcde");
+    assert_equal(srfind(s, 0, "") == -1, "No matches expected", __func__);
+    assert_equal(srfind(s, 7, "aaaaaaa") == -1, "No matches expected", __func__);
+    sfree(s);
+}
+
+void test_scount_as_intended(void) {
+    string s = snew("abcdefghijkaaa");
+    assert_equal(scount(s, 1, "a") == 4, "Invalid count 1", __func__);
+    assert_equal(scount(s, 1, "b") == 1, "Invalid count 2", __func__);
+    assert_equal(scount(s, 3, "kaa") == 1, "Invalid count 3", __func__);
+    assert_equal(scount(s, 5, "aboba") == 0, "Invalid count 4", __func__);
+    sfree(s);
+
+    string b = snewlen("\xff\xfe\xef\x00\x00\xff\xff", 7);
+    assert_equal(scount(b, 1, "\xff") == 3, "Invalid count 5", __func__);
+    assert_equal(scount(b, 2, "\x00\x00") == 1, "Invalid count 6", __func__);
+    assert_equal(scount(b, 7, "\xff\xfe\xef\x00\x00\xff\xff") == 1, "Invalid count 7", __func__);
+    assert_equal(scount(b, 3, "\x00\x00\x01") == 0, "Invalid count 6", __func__);
+    sfree(b);
+}
+
+void test_scount_null_input(void) {
+    assert_equal(scount(NULL, 1, "A") == -1, "Must return -1", __func__);
+
+    string s = snew("aboba");
+    assert_equal(scount(s, 3, NULL) == -1, "Must return -1 2", __func__);
+    sfree(s);
+}
+
+void test_scount_invalid_len(void) {
+    string s = snew("crazy");
+    assert_equal(scount(s, 0, "") == -1, "Must return -1", __func__);
+    assert_equal(scount(s, 7, "BBBBBBB") == -1, "Must return -1 2", __func__);
+    sfree(s);
 }
 
 int main(void) {
@@ -328,6 +561,34 @@ int main(void) {
 
     test_scats_as_intended();
     test_scats_null_passed();
+
+    test_supper_as_intended();
+    test_supper_null_passed();
+    test_supper_weird_strings();
+
+    test_slower_as_intended();
+    test_slower_null_passed();
+    test_slower_weird_strings();
+
+    test_sstartswith_null_input();
+    test_sstartswith_invalid_len();
+    test_sstartswith_as_intended();
+
+    test_sendswith_null_input();
+    test_sendswith_invalid_len();
+    test_sendswith_as_intended();
+
+    test_sfind_as_intended();
+    test_sfind_null_input();
+    test_sfind_invalid_len();
+
+    test_srfind_as_intended();
+    test_srfind_null_input();
+    test_srfind_invalid_len();
+
+    test_scount_as_intended();
+    test_scount_null_input();
+    test_scount_invalid_len();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {
