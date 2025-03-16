@@ -302,25 +302,25 @@ void test_supper_as_intended(void) {
 }
 
 void test_supper_null_passed(void) {
-    supper(NULL);
+    assert_equal(supper(NULL) == false, "Must be false", __func__);
 }
 
 void test_supper_weird_strings(void) {
     string s = snew("01234");
-    supper(s);
+    assert_equal(supper(s) == true, "Must work", __func__);
     assert_equal(strncmp("01234", s, 6) == 0, "Strings must be equal 1", __func__);
     assert_equal(s[5] == '\0', "Must be null-terminated", __func__);
     sfree(s);
 
     string l = snew("?><.");
-    supper(l);
+    assert_equal(supper(l) == true, "Must work", __func__);
     assert_equal(strncmp("?><.", l, 5) == 0, "Strings must be equal 2", __func__);
     assert_equal(l[4] == '\0', "Must be null-terminated", __func__);
     sfree(l);
 
     const char binaryData[] = {0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0xFF, 0xFE};
     string b = snewlen(binaryData, sizeof(binaryData));
-    supper(b);
+    assert_equal(supper(b) == true, "Must work", __func__);
     assert_equal(memcmp("HELLO\0\xFF\xFE", b, sizeof(binaryData) + 1) == 0, "Strings must be equal 3", __func__);
     assert_equal(b[sizeof(binaryData)] == '\0', "Must be null-terminated", __func__);
     assert_equal(sgetlen(b) == sizeof(binaryData), "Length must match", __func__);
@@ -336,25 +336,25 @@ void test_slower_as_intended(void) {
 }
 
 void test_slower_null_passed(void) {
-    slower(NULL);
+    assert_equal(slower(NULL) == false, "Must be false", __func__);
 }
 
 void test_slower_weird_strings(void) {
     string s = snew("01234");
-    slower(s);
+    assert_equal(slower(s) == true, "Must work", __func__);
     assert_equal(strncmp("01234", s, 6) == 0, "Strings must be equal 1", __func__);
     assert_equal(s[5] == '\0', "Must be null-terminated", __func__);
     sfree(s);
 
     string l = snew("?><.");
-    slower(l);
+    assert_equal(slower(l) == true, "Must work", __func__);
     assert_equal(strncmp("?><.", l, 5) == 0, "Strings must be equal 2", __func__);
     assert_equal(l[4] == '\0', "Must be null-terminated", __func__);
     sfree(l);
 
     const char binaryData[] = {0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0xFF, 0xFE};
     string b = snewlen(binaryData, sizeof(binaryData));
-    slower(b);
+    assert_equal(slower(b) == true, "Must work", __func__);
     assert_equal(memcmp("\x68\x65\x6c\x6c\x6f\x00\xff\xfe", b, sizeof(binaryData)) == 0, "Strings must be equal 3", __func__);
     assert_equal(b[sizeof(binaryData)] == '\0', "Must be null-terminated", __func__);
     assert_equal(sgetlen(b) == sizeof(binaryData), "Length must match", __func__);
@@ -522,6 +522,69 @@ void test_scount_invalid_len(void) {
     sfree(s);
 }
 
+void test_strim_as_intended(void) {
+    string s = snew("abc");
+    assert_equal(strim(s, 3, "abc") == true, "Must be true", __func__);
+    assert_equal(memcmp(s, "", 1) == 0, "Must be empty", __func__);
+    assert_equal(sgetlen(s) == 0, "Length must be 0", __func__);
+    sfree(s);
+
+    string t = snew("abcdefgabc");
+    assert_equal(strim(t, 3, "abc") == true, "Must be true 2", __func__);
+    assert_equal(memcmp(t, "defg", 5) == 0, "Must be defg", __func__);
+    assert_equal(sgetlen(t) == 4, "Length must be 4", __func__);
+    sfree(t);
+
+    string u = snew("abcdefgabce");
+    strim(u, 4, "abce");
+    assert_equal(memcmp(u, "abcdefg", 8) == 0, "Must be abcdefg", __func__);
+    assert_equal(sgetlen(u) == 7, "Length must be 7", __func__);
+    sfree(u);
+
+    string space = snew("   lol    ");
+    strim(space, 1, " ");
+    assert_equal(memcmp(space, "lol", 4) == 0, "Must be lol", __func__);
+    assert_equal(sgetlen(space) == 3, "Length must be 3", __func__);
+    sfree(space);
+
+    string nothing = snew("some random string");
+    assert_equal(strim(nothing, 1, " ") == true, "Must be true 3", __func__);
+    assert_equal(memcmp(nothing, "some random string", 19) == 0, "Must be some random string", __func__);
+    assert_equal(sgetlen(nothing) == 18, "Length must be 18", __func__);
+    sfree(nothing);
+
+    string multiple = snew("abcdeeeeeee");
+    assert_equal(strim(multiple, 1, "e") == true, "Must be true 4", __func__);
+    strim(multiple, 1, "e");
+    assert_equal(strim(multiple, 1, "e") == true, "Must be true 5", __func__);;
+    assert_equal(memcmp(multiple, "abcd\0", 5) == 0, "Must be equal", __func__);
+    assert_equal(sgetlen(multiple) == 4, "Length must be 4", __func__);
+    sfree(multiple);
+
+    uint8_t data[] = {0xFF, 0xAA};
+    string bin = snewlen(data, 2);
+    strim(bin, 1, "\xAA");
+    assert_equal(memcmp(bin, "\xFF\x00", 2) == 0, "Must be equal 2", __func__);
+    assert_equal(sgetlen(bin) == 1, "Length must be 1", __func__);
+    sfree(bin);
+}
+
+void test_strim_null_input(void) {
+    string s = snew("abcde");
+    assert_equal(strim(NULL, 3, "LOL") == false, "Must be false", __func__);
+    assert_equal(strim(s, 3, NULL) == false, "Must be false 2", __func__);
+    assert_equal(memcmp(s, "abcde", 6) == 0, "Must be equal", __func__);
+    sfree(s);
+}
+
+void test_strim_invalid_len(void) {
+    string s = snew("abcde");
+    assert_equal(strim(s, 0, "LOL") == false, "Must be false", __func__);
+    assert_equal(strim(s, 6, "abcdef") == false, "Must be false 2", __func__);
+    assert_equal(memcmp(s, "abcde", 6) == 0, "Must be equal", __func__);
+    sfree(s);
+}
+
 int main(void) {
     printf("Running tests...\n");
 
@@ -589,6 +652,10 @@ int main(void) {
     test_scount_as_intended();
     test_scount_null_input();
     test_scount_invalid_len();
+
+    test_strim_as_intended();
+    test_strim_null_input();
+    test_strim_invalid_len();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {

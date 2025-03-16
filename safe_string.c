@@ -129,9 +129,10 @@ void ssetalloc(const string s, const size_t newalloc) {
     If input string is NULL, a buffer of length ilen is initialized with zero bytes.
     Return NULL if malloc fails.
     Return NULL if ilen causes overflow.
+    
     ilen > strlen(input) causes undefined behaviour.
 */
-string snewlen(const char* input, size_t ilen) {
+string snewlen(const void* input, size_t ilen) {
     void* h;
     string str;
     uint8_t type = getReqType(ilen);
@@ -197,7 +198,7 @@ string snewlen(const char* input, size_t ilen) {
 
     This function is not binary safe.
 */
-string snew(const char* input) {
+string snew(const void* input) {
     if (input == NULL) return NULL;
     size_t ilen = strlen(input);
     return snewlen(input, ilen);
@@ -264,15 +265,16 @@ string sdup(const string s) {
 /*
     Join n C-strings together with separators of length seplen.
 
-    Strings and separator must be null-terminated.
-    If n does not match the amount of elements in the char* array or
-    seplen is not equal to the length of sep, behaviour is undefined.
     Return NULL if input causes overflow.
     Return NULL if malloc fails.
     Return NULL if one of the given strings is NULL.
     Return NULL if sep is NULL.
     Return NULL if n < 2.
     Return a new string in which the given ones are joined together.
+
+    Strings and separator must be null-terminated.
+    If n does not match the amount of elements in the char* array or
+    seplen is not equal to the length of sep, behaviour is undefined.
 
     This function is not binary safe.
 */
@@ -312,15 +314,16 @@ string sjoin(size_t n, const char* str[n], size_t seplen, const char* sep) {
 /*
     Join n strings together with separators of length seplen.
 
-    Separator must be null-terminated.
-    If n does not match the amount of elements in the string array or
-    seplen is not equal to the length of sep, behaviour is undefined.
     Return NULL if input causes overflow.
     Return NULL if malloc fails.
     Return NULL if one of the given strings is NULL.
     Return NULL if sep is NULL.
     Return NULL if n < 2.
     Return a new string in which the given ones are joined together.
+
+    Separator must be null-terminated.
+    If n does not match the amount of elements in the string array or
+    seplen is not equal to the length of sep, behaviour is undefined.
 */
 string sjoins(size_t n, const string str[n], size_t seplen, const char* sep) {
     if (n < 2) return NULL;
@@ -406,25 +409,27 @@ string scats(const string s1, const string s2) {
 /*
     Change all characters to upper case.
 
-    Do nothing if string is NULL.
+    Return false if string is NULL.
+    Return true on success.
 */
-void supper(string s) {
-    if (s == NULL) return;
+bool supper(string s) {
+    if (s == NULL) return false;
     for (size_t i = 0; i < sgetlen(s); i++)
         s[i] = toupper(s[i]);
-    return;
+    return true;
 }
 
 /*
     Change all characters to lower case.
 
-    Do nothing if string is NULL.
+    Return false if string is NULL.
+    Return true on success.
 */
-void slower(string s) {
-    if (s == NULL) return;
+bool slower(string s) {
+    if (s == NULL) return false;
     for (size_t i = 0; i < sgetlen(s); i++)
         s[i] = tolower(s[i]);
-    return;
+    return true;
 }
 
 /*
@@ -433,6 +438,7 @@ void slower(string s) {
     Return false if string or pattern is NULL.
     Return false if plen > len(string).
     Return false if plen is 0.
+
     Behaviour is undefined if plen != len(pattern).
 */
 bool sstartswith(string s, size_t plen, const char* pattern) {
@@ -449,6 +455,7 @@ bool sstartswith(string s, size_t plen, const char* pattern) {
     Return false if string or pattern is NULL.
     Return false if plen > len(string).
     Return false if plen is 0.
+
     Behaviour is undefined if plen != len(pattern).
 */
 bool sendswith(string s, size_t plen, const char* pattern) {
@@ -465,6 +472,7 @@ bool sendswith(string s, size_t plen, const char* pattern) {
     Return -1 if s or pattern is NULL.
     Return -1 if plen > len(s).
     Return -1 if plen == 0.
+
     Behaviour is undefined if plen != len(pattern).
 */
 ssize_t sfind(string s, size_t plen, const char* pattern) {
@@ -485,6 +493,7 @@ ssize_t sfind(string s, size_t plen, const char* pattern) {
     Return -1 if s or pattern is NULL.
     Return -1 if plen > len(s).
     Return -1 if plen == 0.
+
     Behaviour is undefined if plen != len(pattern).
 */
 ssize_t srfind(string s, size_t plen, const char* pattern) {
@@ -505,6 +514,7 @@ ssize_t srfind(string s, size_t plen, const char* pattern) {
     Return -1 if s or pattern is NULL.
     Return -1 if plen > len(s).
     Return -1 if plen == 0.
+
     Behaviour is undefined if plen != len(pattern).
 */
 ssize_t scount(string s, size_t plen, const char* pattern) {
@@ -520,7 +530,36 @@ ssize_t scount(string s, size_t plen, const char* pattern) {
     return count;
 }
 
+/*
+    Remove the given pattern from the beginning and the end of the string.
+
+    Return false if s or pattern is NULL.
+    Return false if plen > len(s) or plen is 0.
+    Return true on success.
+
+    Behaviour is undefined if plen != len(pattern).
+*/
+bool strim(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return false;
+    size_t len = sgetlen(s);
+    if (plen > len || plen == 0)
+        return false;
+    size_t newstart = 0;
+    while (newstart + plen <= len && memcmp(s + newstart, pattern, plen) == 0)
+        newstart += plen;
+    size_t rm_end = 1;
+    while (newstart < len - rm_end * plen && 
+           memcmp(s + len - rm_end * plen, pattern, plen) == 0)
+        rm_end++;
+    size_t newlen = len - newstart - (rm_end - 1) * plen;
+    if (newstart > 0)
+        memmove(s, s + newstart, newlen);
+    s[newlen] = 0;
+    ssetlen(s, newlen);
+    return true;
+}
+
 void sreplace(void);
 void sremove(string s, size_t plen, const char* pattern);
-void trim(string s, size_t plen, const char* pattern);
 string* ssplit(const string s, size_t seplen, char* sep);
