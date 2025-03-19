@@ -61,5 +61,6 @@ bool strim(string s, size_t plen, const char* pattern);
 bool sremove(string s, size_t plen, const char* pattern);
 string sslice(string s, size_t start, size_t end);
 string sbite(string s, size_t plen, const char* pattern);
+ssize_t sfind_advanced(string s, size_t plen, const char* pattern);
 
 #endif 

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <time.h>
 
 int test_count = 0;
 int fail_count = 0;
@@ -453,6 +454,66 @@ void test_sfind_invalid_len(void) {
     sfree(s);
 }
 
+void test_sfind_time(void) {
+    int val = 200000000;
+    int other = val - 100;
+    char* arr = malloc(val);
+    for (int i = 0; i < other; i++) {
+        arr[i] = 'a';
+    }
+    char arr2[100];
+    for (int i = 0; i < 100; i++) {
+        switch (i % 10) {
+            case 0:
+                arr2[i] = 'a';
+                break;
+            case 1:
+                arr2[i] = 'b';
+                break;
+            case 2:
+                arr2[i] = 'c';
+                break;
+            case 3:
+                arr2[i] = 'd';
+                break;
+            case 4:
+                arr2[i] = 'e';
+                break;
+            case 5:
+                arr2[i] = 'f';
+                break;
+            case 6:
+                arr2[i] = 'g';
+                break;
+            case 7:
+                arr2[i] = 'h';
+                break;
+            case 8:
+                arr2[i] = 'i';
+                break;
+            case 9:
+                arr2[i] = 'j';
+                break;
+        }
+    };
+    memcpy(arr + other, arr2, 100);
+    arr[val] = 0;
+    string s = snew(arr);
+    clock_t start1 = clock();
+    ssize_t res1 = sfind(s, 100, arr2);
+    clock_t end1 = clock();
+    double elapsed_time1 = (double)(end1 - start1) / CLOCKS_PER_SEC;
+    printf("Time taken by sfind:     %f seconds\n", elapsed_time1);
+    clock_t start2 = clock();
+    ssize_t res2 = sfind_advanced(s, 100, arr2);
+    clock_t end2 = clock();
+    double elapsed_time2 = (double)(end2 - start2) / CLOCKS_PER_SEC;
+    printf("Time taken by sfind_adv: %f seconds\n", elapsed_time2);
+    printf("res1: %zu\nres2: %zu\n", res1, res2);
+    sfree(s);
+    free(arr);
+}
+
 void test_srfind_as_intended(void) {
     string s = snew("abcdefghij");
     assert_equal(s != NULL, "Must not be NULL", __func__);
@@ -751,6 +812,7 @@ int main(void) {
     test_sfind_as_intended();
     test_sfind_null_input();
     test_sfind_invalid_len();
+    // test_sfind_time();
 
     test_srfind_as_intended();
     test_srfind_null_input();

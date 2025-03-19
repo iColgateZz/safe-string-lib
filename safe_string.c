@@ -466,6 +466,80 @@ bool sendswith(string s, size_t plen, const char* pattern) {
     return memcmp(s + sgetlen(s) - plen, pattern, plen) == 0;
 }
 
+static inline
+size_t* lps(size_t plen, const char* pattern) {
+    size_t* table = malloc(plen * sizeof(size_t));
+    if (table == NULL)
+        return NULL;
+    size_t j = 0, i = 1;
+    while (i < plen) {
+        if (pattern[i] == pattern[j]) {
+            j++;
+            table[i] = j;
+            i++;
+        } else {
+            if (j != 0) {
+                j = table[j - 1];
+            } else {
+                table[i] = 0;
+                i++;
+            }
+        }
+    }
+    return table;
+}
+
+/*
+    After testing it turned out that the naive approach is faster in most cases.
+*/
+ssize_t sfind_advanced(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return -1;
+    size_t n = sgetlen(s);
+    if (plen > n || plen == 0)
+        return -1;
+    if (plen == 1) {
+        for (size_t idx = 0; idx <= n - plen; idx++) {
+            if (s[idx] == pattern[0])
+                return idx;
+        }
+    } else if (plen < 5) {
+        for (size_t idx = 0; idx <= n - plen; idx++) {
+            if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
+                return idx;
+        }
+    } else {
+        /* Variation of Knuth-Morris-Pratt Algo */
+        size_t i = 0, j = 0;
+        size_t* table = lps(plen, pattern);
+        if (table == NULL) return -1;
+        while (i < n)
+        {
+            if (pattern[j] == s[i]) 
+            {
+                i++;
+                j++;
+            }
+            if (j == plen)
+            {
+                free(table);
+                return i - j;
+            }
+            else 
+            {
+                if (i < n && pattern[j] != s[i]) {
+                    if (j != 0)
+                        j = table[j - 1];
+                     else
+                        i++;
+                }
+            }
+        }
+        free(table);
+    }
+    return -1;
+}
+
 /*
     Find the starting index of the first substring matching the 'pattern'.
 
@@ -475,17 +549,24 @@ bool sendswith(string s, size_t plen, const char* pattern) {
     Return -1 if pattern is not found.
 
     Behaviour is undefined if plen != len(pattern).
-    O(len(s) * plen) can be improved with kmp algo.
 */
 ssize_t sfind(string s, size_t plen, const char* pattern) {
     if (s == NULL || pattern == NULL)
         return -1;
-    if (plen > sgetlen(s) || plen == 0)
+    size_t n = sgetlen(s);
+    if (plen > n || plen == 0)
         return -1;
-    for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
-        if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
-            return idx;
-    }
+    if (plen == 1) {
+        for (size_t idx = 0; idx <= n - plen; idx++) {
+            if (s[idx] == pattern[0])
+                return idx;
+        }
+    } else {
+        for (size_t idx = 0; idx <= n - plen; idx++) {
+            if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
+                return idx;
+        }
+    } 
     return -1;
 }
 
@@ -504,7 +585,7 @@ ssize_t srfind(string s, size_t plen, const char* pattern) {
     if (plen > sgetlen(s) || plen == 0)
         return -1;
     for (ssize_t idx = sgetlen(s) - plen; idx >= 0; idx--) {
-        if (memcmp(s + idx, pattern, plen) == 0)
+        if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
             return idx;
     }
     return -1;
@@ -526,7 +607,7 @@ ssize_t scount(string s, size_t plen, const char* pattern) {
         return -1;
     size_t count = 0;
     for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
-        if (memcmp(s + idx, pattern, plen) == 0)
+        if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
             count++;
     }
     return count;
