@@ -585,6 +585,74 @@ void test_strim_invalid_len(void) {
     sfree(s);
 }
 
+void test_sremove_as_intended(void) {
+    string s = snew("abcdefg");
+    assert_equal(sremove(s, 1, "a") == true, "'a' must be removed", __func__);
+    assert_equal(memcmp(s, "bcdefg", 7) == 0, "String must be equal", __func__);
+    assert_equal(sgetlen(s) == 6, "Length did not change", __func__);
+    sfree(s);
+
+    string l = snew("abcCrazyabcStuffabcIsabcHereabc");
+    assert_equal(sremove(l, 3, "abc") == true, "'abc' must be removed", __func__);
+    assert_equal(memcmp(l, "CrazyStuffIsHere", 17) == 0, "String must be equal", __func__);
+    assert_equal(sgetlen(l) == 16, "Length did not change", __func__);
+    sfree(l);
+
+    string m = snew("patternToDelete");
+    assert_equal(sremove(m, 15, "patternToDelete") == true, "All must be removed", __func__);
+    assert_equal(memcmp(m, "", 1) == 0, "String must be equal", __func__);
+    assert_equal(sgetlen(m) == 0, "Length did not change", __func__);
+    sfree(m);
+
+    string b = snewlen("\x00\xff\xce", 3);
+    assert_equal(sremove(b, 1, "\xce") == true, "'\xce' must be removed", __func__);
+    assert_equal(memcmp(b, "\x00\xff", 3) == 0, "String must be equal", __func__);
+    assert_equal(sgetlen(b) == 2, "Length did not change", __func__);
+    sfree(b);
+}
+
+void test_sremove_null_input(void) {
+    string s = snew("abcdefghijklmn");
+    assert_equal(sremove(NULL, 3, "lol") == false, "Must be false", __func__);
+    assert_equal(sremove(s, 3, NULL) == false, "Must be false 2", __func__);
+    sfree(s);
+}
+
+void test_sremove_invalid_len(void) {
+    string s = snew("abcde");
+    assert_equal(sremove(s, 6, "abcdef") == false, "Must be false", __func__);
+    assert_equal(sremove(s, 0, "") == false, "Must be false 2", __func__);
+    sfree(s);
+}
+
+void test_sslice_as_intended(void) {
+    string s = snew("Some long string that is nice to slice.");
+    string s1 = sslice(s, 0, sgetlen(s));
+    assert_equal(memcmp(s, s1, sgetlen(s) + 1) == 0, "Must be equal", __func__);
+
+    string s2 = sslice(s, 10, sgetlen(s));
+    assert_equal(memcmp("string that is nice to slice.", s2, sgetlen(s2) + 1) == 0, "Must be equal 2", __func__);
+    assert_equal(sgetlen(s2) == 29, "Length must be updated 2", __func__);
+
+    string s3 = sslice(s, 10, 20);
+    assert_equal(memcmp("string tha", s3, sgetlen(s3) + 1) == 0, "Must be equal 3", __func__);
+    assert_equal(sgetlen(s3) == 10, "Length must be updated 3", __func__);
+
+    sfree(s);
+    sfree(s1);
+    sfree(s2);
+    sfree(s3);
+}
+
+void test_sslice_null_input(void) {
+    assert_equal(sslice(NULL, 0, 1) == NULL, "Must be NULL", __func__);
+}
+
+void test_sslice_invalid_len(void) {
+    assert_equal(sslice("char", 0, 0) == NULL, "Must be NULL", __func__);
+    assert_equal(sslice("char", 100, 0) == NULL, "Must be NULL 2", __func__);
+}
+
 int main(void) {
     printf("Running tests...\n");
 
@@ -656,6 +724,14 @@ int main(void) {
     test_strim_as_intended();
     test_strim_null_input();
     test_strim_invalid_len();
+
+    test_sremove_as_intended();
+    test_sremove_null_input();
+    test_sremove_invalid_len();
+
+    test_sslice_as_intended();
+    test_sslice_null_input();
+    test_sslice_invalid_len();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {

@@ -129,7 +129,7 @@ void ssetalloc(const string s, const size_t newalloc) {
     If input string is NULL, a buffer of length ilen is initialized with zero bytes.
     Return NULL if malloc fails.
     Return NULL if ilen causes overflow.
-    
+
     ilen > strlen(input) causes undefined behaviour.
 */
 string snewlen(const void* input, size_t ilen) {
@@ -472,6 +472,7 @@ bool sendswith(string s, size_t plen, const char* pattern) {
     Return -1 if s or pattern is NULL.
     Return -1 if plen > len(s).
     Return -1 if plen == 0.
+    Return -1 if pattern is not found.
 
     Behaviour is undefined if plen != len(pattern).
 */
@@ -560,6 +561,51 @@ bool strim(string s, size_t plen, const char* pattern) {
     return true;
 }
 
+/*
+    Remove the given pattern from the string.
+
+    Return false if s or pattern is NULL.
+    Return false if plen > len(s) or plen is 0.
+    Return true on success.
+
+    Behaviour is undefined if plen != len(pattern).
+*/
+bool sremove(string s, size_t plen, const char* pattern) {
+    if (s == NULL || pattern == NULL)
+        return false;
+    size_t slen = sgetlen(s);
+    if (plen > slen || plen == 0)
+        return false;
+    size_t idx = 0;
+    size_t i = 0;
+    while (i < slen) {
+        if (slen - i >= plen && memcmp(s + i, pattern, plen) == 0)
+            i += plen;
+        else
+            s[idx++] = s[i++];
+    }
+    ssetlen(s, idx);
+    s[idx] = 0;
+    return true;
+}
+
+string sslice(string s, size_t start, size_t end) {
+    if (s == NULL) return NULL;
+    if (start >= end) return NULL;
+
+    string new = snewlen(NULL, end - start);
+    if (new == NULL) return NULL;
+    for (size_t i = 0; i < end - start; i++)
+        new[i] = s[start + i];
+    new[end - start] = 0;
+    return new;
+}
+
+string sbite(string s, size_t plen, const char* pattern) {
+    ssize_t idx = sfind(s, plen, pattern);
+    if (idx == -1) return NULL;
+    return NULL;
+}
+
 void sreplace(void);
-void sremove(string s, size_t plen, const char* pattern);
 string* ssplit(const string s, size_t seplen, char* sep);

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -pedantic
+CFLAGS=-O2 -Wall -Wextra -pedantic
 
 rule: clean first
 
