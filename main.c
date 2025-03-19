@@ -63,7 +63,7 @@ void test_snewlen_different_lengths(void) {
 }
 
 void test_snewlen_with_overflow(void) {
-    string s = snewlen(NULL, SIZE_T_MAX);
+    string s = snewlen(NULL, SIZE_MAX);
     assert_equal(s == NULL, "The length should overflow and produce an error", __func__);
 }
 
@@ -182,7 +182,7 @@ void test_sjoin_overflow(void) {
     char* arr[2];
     arr[0] = "string";
     arr[1] = "string";
-    string s = sjoin(2, (const char**) arr, SIZE_T_MAX, "LOL");
+    string s = sjoin(2, (const char**) arr, SIZE_MAX, "LOL");
     assert_equal(s == NULL, "String must be NULL after overflow", __func__);
 }
 
@@ -249,7 +249,7 @@ void test_sjoins_overflow(void) {
     string* arr = malloc(2 * sizeof(string));
     arr[0] = snew("string");
     arr[1] = snew("string");
-    string s = sjoins(2, arr, SIZE_T_MAX, "LOL");
+    string s = sjoins(2, arr, SIZE_MAX, "LOL");
     assert_equal(s == NULL, "String must be NULL after overflow", __func__);
     for (int i = 0; i < 2; i++) {
         sfree(arr[i]);
@@ -653,6 +653,45 @@ void test_sslice_invalid_len(void) {
     assert_equal(sslice("char", 100, 0) == NULL, "Must be NULL 2", __func__);
 }
 
+void test_sbite_as_intended(void) {
+    string s = snew("SomeabcString");
+    string some = sbite(s, 3, "abc");
+    assert_equal(memcmp(some, "Some", 5) == 0, "Must be equal", __func__);
+    assert_equal(memcmp(s, "String", 7) == 0, "Must be equal 2", __func__);
+    assert_equal(sgetlen(some) == 4, "Length must be updated", __func__);
+    assert_equal(sgetlen(s) == 6, "Length must be updated 2", __func__);
+    sfree(s);
+    sfree(some);
+
+    string k = snew("some;kind;of;input");
+    string arr[2];
+    for (int i = 0; i < 2; i++) {
+        arr[i] = sbite(k, 1, ";");
+    }
+    assert_equal(memcmp(k, "of;input", 9) == 0, "Must be equal 3", __func__);
+    assert_equal(sgetlen(k) == 8, "Length must be updated 3", __func__);
+
+    assert_equal(memcmp(arr[0], "some", 5) == 0, "Must be equal 4", __func__);
+    assert_equal(sgetlen(arr[0]) == 4, "Length must be updated 4", __func__);
+
+    assert_equal(memcmp(arr[1], "kind", 5) == 0, "Must be equal 5", __func__);
+    assert_equal(sgetlen(arr[1]) == 4, "Length must be updated 5", __func__);
+
+    sfree(k);
+    sfree(arr[0]);
+    sfree(arr[1]);
+}
+
+void test_sbite_null_input(void) {
+    assert_equal(sbite(NULL, 3, "abc") == NULL, "Must be NULL", __func__);
+    assert_equal(sbite("char", 3, NULL) == NULL, "Must be NULL", __func__);
+}
+
+void test_sbite_invalid_len(void) {
+    assert_equal(sbite("char", 0, "") == NULL, "Must be NULL", __func__);
+    assert_equal(sbite("char", 5, "chars") == NULL, "Must be NULL 2", __func__);
+}
+
 int main(void) {
     printf("Running tests...\n");
 
@@ -732,6 +771,10 @@ int main(void) {
     test_sslice_as_intended();
     test_sslice_null_input();
     test_sslice_invalid_len();
+
+    test_sbite_as_intended();
+    test_sbite_null_input();
+    test_sbite_invalid_len();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {

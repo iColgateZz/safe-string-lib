@@ -475,6 +475,7 @@ bool sendswith(string s, size_t plen, const char* pattern) {
     Return -1 if pattern is not found.
 
     Behaviour is undefined if plen != len(pattern).
+    O(len(s) * plen) can be improved with kmp algo.
 */
 ssize_t sfind(string s, size_t plen, const char* pattern) {
     if (s == NULL || pattern == NULL)
@@ -482,7 +483,7 @@ ssize_t sfind(string s, size_t plen, const char* pattern) {
     if (plen > sgetlen(s) || plen == 0)
         return -1;
     for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
-        if (memcmp(s + idx, pattern, plen) == 0)
+        if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
             return idx;
     }
     return -1;
@@ -589,6 +590,14 @@ bool sremove(string s, size_t plen, const char* pattern) {
     return true;
 }
 
+/*
+    Create a new string that is a slice of an existing one.
+
+    Return NULL if s is NULL.
+    Return NULL if start >= end.
+    Return NULL if malloc fails.
+    Return a slice [start, end).
+*/
 string sslice(string s, size_t start, size_t end) {
     if (s == NULL) return NULL;
     if (start >= end) return NULL;
@@ -601,11 +610,43 @@ string sslice(string s, size_t start, size_t end) {
     return new;
 }
 
+/*
+    Bite the given string.
+
+    Example:
+        s = snew("some;;;thing")
+        pattern = ";;;"
+        new = sbite(s, 3, pattern);
+        -> new == "some" && s == "thing"
+
+    Return NULL if s is NULL or pattern is NULL.
+    Return NULL if plen > len(s).
+    Return NULL if pattern is not found in s.
+*/
 string sbite(string s, size_t plen, const char* pattern) {
     ssize_t idx = sfind(s, plen, pattern);
     if (idx == -1) return NULL;
-    return NULL;
+    string new = sslice(s, 0, idx);
+    size_t newlen = sgetlen(s) - idx - plen;
+    memmove(s, s + idx + plen, newlen);
+    s[newlen] = 0;
+    ssetlen(s, newlen);
+    return new;
 }
 
-void sreplace(void);
+bool sreplace(string s, size_t plen, const char* p, size_t newplen, const char * newp) {
+    if (s == NULL || p == NULL || newp == NULL)
+        return false;
+    if (plen == 0 || newplen == 0 || plen > sgetlen(s)) 
+        return false;
+
+    if (plen == newplen) {
+
+    } else if (plen > newplen) {
+
+    } else {
+
+    }
+    return true;
+}
 string* ssplit(const string s, size_t seplen, char* sep);
