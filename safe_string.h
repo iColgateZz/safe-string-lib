@@ -62,5 +62,7 @@ bool sremove(string s, size_t plen, const char* pattern);
 string sslice(string s, size_t start, size_t end);
 string sbite(string s, size_t plen, const char* pattern);
 ssize_t sfind_advanced(string s, size_t plen, const char* pattern);
+string* ssplit(const string s, size_t seplen, const char* sep, size_t* n);
+void sfreearr(string* arr, size_t n);
 
 #endif 

@@ -606,9 +606,16 @@ ssize_t scount(string s, size_t plen, const char* pattern) {
     if (plen > sgetlen(s) || plen == 0)
         return -1;
     size_t count = 0;
-    for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
-        if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
-            count++;
+    if (plen == 1) {
+        for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
+            if (s[idx] == pattern[0])
+                count++;
+        }
+    } else {
+        for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
+            if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0)
+                count++;
+        }
     }
     return count;
 }
@@ -682,13 +689,7 @@ bool sremove(string s, size_t plen, const char* pattern) {
 string sslice(string s, size_t start, size_t end) {
     if (s == NULL) return NULL;
     if (start >= end) return NULL;
-
-    string new = snewlen(NULL, end - start);
-    if (new == NULL) return NULL;
-    for (size_t i = 0; i < end - start; i++)
-        new[i] = s[start + i];
-    new[end - start] = 0;
-    return new;
+    return snewlen(s + start, end - start);
 }
 
 /*
@@ -715,19 +716,68 @@ string sbite(string s, size_t plen, const char* pattern) {
     return new;
 }
 
-bool sreplace(string s, size_t plen, const char* p, size_t newplen, const char * newp) {
-    if (s == NULL || p == NULL || newp == NULL)
-        return false;
-    if (plen == 0 || newplen == 0 || plen > sgetlen(s)) 
-        return false;
-
-    if (plen == newplen) {
-
-    } else if (plen > newplen) {
-
+static inline
+size_t scount_private(const string s, size_t plen, const char* pattern) {
+    size_t count = 0;
+    if (plen == 1) {
+        for (size_t idx = 0; idx <= sgetlen(s) - plen; idx++) {
+            if (s[idx] == pattern[0])
+                count++;
+        }
     } else {
-
+        size_t idx = 0;
+        while (idx <= sgetlen(s) - plen) {
+            if (s[idx] == pattern[0] && memcmp(s + idx, pattern, plen) == 0) {
+                count++;
+                idx += plen;
+            } else 
+                idx++;
+        }
     }
-    return true;
+    return count;
 }
-string* ssplit(const string s, size_t seplen, char* sep);
+
+string* ssplit(const string s, size_t seplen, const char* sep, size_t* n) {
+    if (!s || !sep || !n)
+        return NULL;
+    if (seplen > sgetlen(s) || seplen == 0)
+        return NULL;
+    size_t count = scount_private(s, seplen, sep);
+    size_t size_to_alloc = (count + 1) * sizeof(string);
+    if (size_to_alloc / sizeof(string) != count + 1)
+        return NULL;
+    string* arr = malloc(size_to_alloc);
+    if (!arr)
+        return NULL;
+
+    size_t elem = 0;
+    size_t start = 0;
+    for (size_t idx = 0; idx <= sgetlen(s) - seplen; idx++) {
+        if (s[idx] == sep[0] && (seplen == 1 || memcmp(s + idx, sep, seplen) == 0)) {
+            arr[elem] = snewlen(s + start, idx - start);
+            if (!arr[elem]) goto cleanup;
+            elem++;
+            idx += seplen - 1;
+            start = idx + 1;
+        }
+    }
+    arr[elem] = snewlen(s + start, sgetlen(s) - start);
+    if (!arr[elem] || elem != count) goto cleanup;
+    *n = elem + 1;
+    return arr;
+
+cleanup:
+    {
+        for (size_t i = 0; i < elem; i++)
+            sfree(arr[i]);
+        free(arr);
+        return NULL;
+    }
+}
+
+void sfreearr(string* arr, size_t n) {
+    if (!arr) return;
+    for (size_t i = 0; i < n; i++)
+        sfree(arr[i]);
+    free(arr);
+}

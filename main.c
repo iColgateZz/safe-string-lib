@@ -753,6 +753,59 @@ void test_sbite_invalid_len(void) {
     assert_equal(sbite("char", 5, "chars") == NULL, "Must be NULL 2", __func__);
 }
 
+void test_ssplit_as_intended(void) {
+    string s = snew("String to be split");
+    size_t n;
+    string* arr = ssplit(s, 1, " ", &n);
+    assert_equal(arr != NULL, "Must be a valid array", __func__);
+    assert_equal(n == 4, "Must consist of 4 elems", __func__);
+    assert_equal(sgetlen(s) == 18, "Orig not modified", __func__);
+    assert_equal(memcmp(s, "String to be split", 19) == 0, "Orig not modified 2", __func__);
+    assert_equal(memcmp(arr[0], "String", 7) == 0, "First is correct", __func__);
+    assert_equal(sgetlen(arr[0]) == 6, "First len is correct", __func__);
+    assert_equal(memcmp(arr[3], "split", 6) == 0, "Last is correct", __func__);
+    assert_equal(sgetlen(arr[3]) == 5, "Last len is correct", __func__);
+    sfreearr(arr, n);
+    sfree(s);
+
+    string o = snew("OneBigWord");
+    size_t ol;
+    string* arr2 = ssplit(o, 5, "lolol", &ol);
+    assert_equal(ol == 1, "Must consist of 1 elem", __func__);
+    assert_equal(memcmp(arr2[0], "OneBigWord", 11) == 0,  "Must be equal", __func__);
+    assert_equal(sgetlen(arr2[0]) == 10, "Length is invalid", __func__);
+    sfreearr(arr2, ol);
+    sfree(o);
+
+    string l = snew(";;Something;;");
+    size_t ll;
+    string* arr3 = ssplit(l, 2, ";;", &ll);
+    assert_equal(ll == 3, "Must consist of 3 elems", __func__);
+    assert_equal(memcmp(arr3[0], "", 1) == 0,  "Must be empty", __func__);
+    assert_equal(sgetlen(arr3[0]) == 0, "Length must be 0", __func__);
+    assert_equal(memcmp(arr3[2], "", 1) == 0,  "Must be empty 2", __func__);
+    assert_equal(sgetlen(arr3[2]) == 0, "Length must be 0 2", __func__);
+    assert_equal(memcmp(arr3[1], "Something", 10) == 0,  "Must be 'Something'", __func__);
+    assert_equal(sgetlen(arr3[1]) == 9, "Length must be 9", __func__);
+    sfreearr(arr3, ll);
+    sfree(l);
+}
+
+void test_ssplit_null_input(void) {
+    size_t n;
+    assert_equal(ssplit(NULL, 3, "lol", &n) == NULL, "Must fail 1", __func__);
+    assert_equal(ssplit("some", 3, NULL, &n) == NULL, "Must fail 2", __func__);
+    assert_equal(ssplit("some", 3, "lol", NULL) == NULL, "Must fail 3", __func__);
+}
+
+void test_ssplit_invalid_len(void) {
+    size_t n;
+    string s = snew("some");
+    assert_equal(ssplit(s, 0, "lol", &n) == NULL, "Must fail 1", __func__);
+    assert_equal(ssplit(s, 5, "lollo", &n) == NULL, "Must fail 2", __func__);
+    sfree(s);
+}
+
 int main(void) {
     printf("Running tests...\n");
 
@@ -837,6 +890,10 @@ int main(void) {
     test_sbite_as_intended();
     test_sbite_null_input();
     test_sbite_invalid_len();
+
+    test_ssplit_as_intended();
+    test_ssplit_null_input();
+    test_ssplit_invalid_len();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {
