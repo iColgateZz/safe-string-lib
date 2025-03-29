@@ -806,6 +806,32 @@ void test_ssplit_invalid_len(void) {
     sfree(s);
 }
 
+void test_sltrimchar_wrong_input(void) {
+    assert_equal(!sltrimchar(NULL, 3, "lol"), "Must return false", __func__);
+    assert_equal(!sltrimchar("something", 0, "lol"), "Must return false", __func__);
+    assert_equal(!sltrimchar("something", 3, NULL), "Must return false", __func__);
+}
+
+void test_sltrimchar_as_intended(void) {
+    string s = snew("\r\n\r\nGET /some/uri HTTP/1.1");
+    assert_equal(sltrimchar(s, 2, "\r\n"), "Must work", __func__);
+    assert_equal(strncmp(s, "GET /some/uri HTTP/1.1", 23) == 0, "Must trim", __func__);
+    assert_equal(sgetlen(s) == 22, "Must change the length", __func__);
+    sfree(s);
+
+    string n = snew("No pattern");
+    assert_equal(sltrimchar(n, 2, "\r\n"), "Must work", __func__);
+    assert_equal(strncmp(n, "No pattern", 11) == 0, "Must trim", __func__);
+    assert_equal(sgetlen(n) == 10, "Must change the length", __func__);
+    sfree(n);
+
+    string e = snew("");
+    assert_equal(sltrimchar(e, 2, "\r\n"), "Must work", __func__);
+    assert_equal(strncmp(e, "", 1) == 0, "Must trim", __func__);
+    assert_equal(sgetlen(e) == 0, "Must change the length", __func__);
+    sfree(e);
+}
+
 int main(void) {
     printf("Running tests...\n");
 
@@ -894,6 +920,9 @@ int main(void) {
     test_ssplit_as_intended();
     test_ssplit_null_input();
     test_ssplit_invalid_len();
+
+    test_sltrimchar_wrong_input();
+    test_sltrimchar_as_intended();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {

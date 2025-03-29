@@ -279,7 +279,7 @@ string sdup(const string s) {
     This function is not binary safe.
 */
 string sjoin(size_t n, const char* str[n], size_t seplen, const char* sep) {
-    if (n < 2) return NULL;
+    if (n < 1) return NULL;
     if (sep == NULL) return NULL;
     size_t curlen = 0;
     for (size_t i = 0; i < n; i++) {
@@ -326,7 +326,7 @@ string sjoin(size_t n, const char* str[n], size_t seplen, const char* sep) {
     seplen is not equal to the length of sep, behaviour is undefined.
 */
 string sjoins(size_t n, const string str[n], size_t seplen, const char* sep) {
-    if (n < 2) return NULL;
+    if (n < 1) return NULL;
     if (sep == NULL) return NULL;
     size_t curlen = 0;
     for (size_t i = 0; i < n; i++) {
@@ -737,6 +737,14 @@ size_t scount_private(const string s, size_t plen, const char* pattern) {
     return count;
 }
 
+/*
+    Split a string using the given separator into an array of n substrings.
+
+    Return NULL if s, sep or n is NULL.
+    Return NULL if seplen > len(s) or seplen is 0.
+    Return NULL if the input causes size_t overflow.
+    Return NULL if any allocation fails.
+*/
 string* ssplit(const string s, size_t seplen, const char* sep, size_t* n) {
     if (!s || !sep || !n)
         return NULL;
@@ -775,9 +783,55 @@ cleanup:
     }
 }
 
+/*
+    Free the array created by ssplit.
+*/
 void sfreearr(string* arr, size_t n) {
     if (!arr) return;
     for (size_t i = 0; i < n; i++)
         sfree(arr[i]);
     free(arr);
+}
+
+/*
+    Trim any character in c_arr from the beginning of the given string.
+
+    Return false if s or c_arr is NULL.
+    Return false if c_size is 0.
+
+    Behaviour is undefined if c_size != len(c_arr).
+*/
+bool sltrimchar(string s, size_t c_size, char* c_arr) {
+    if (!s || !c_arr || !c_size)
+        return false;
+    size_t slen = sgetlen(s);
+    size_t counter = 0;
+    for (size_t idx = 0; idx < slen; ++idx) {
+        bool found = false;
+        for (size_t c_idx = 0; c_idx < c_size; ++c_idx) {
+            if (s[idx] == c_arr[c_idx]) {
+                ++counter;
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            break;
+    }
+    memmove(s, s + counter, slen - counter);
+    ssetlen(s, slen - counter);
+    s[slen - counter] = 0;
+    return true;
+}
+
+/*
+    Create a new string where old pattern is replaced with a new one.
+*/
+string sreplace(const string s, size_t olen, const char* old, size_t nlen, const char* new) {
+    size_t n;
+    string* split = ssplit(s, olen, old, &n);
+    if (!split) return NULL;
+    string res = sjoins(n, split, nlen, new);
+    sfreearr(split, n);
+    return res;
 }
