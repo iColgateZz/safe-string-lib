@@ -66,5 +66,6 @@ string* ssplit(const string s, size_t seplen, const char* sep, size_t* n);
 void sfreearr(string* arr, size_t n);
 bool sltrimchar(string s, size_t c_size, char* c_arr);
 string sreplace(const string s, size_t olen, const char* old, size_t nlen, const char* new);
+string scatsc(string s, size_t cstr_len, char* cstr);
 
 #endif 

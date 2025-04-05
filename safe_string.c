@@ -123,6 +123,42 @@ void ssetalloc(const string s, const size_t newalloc) {
     return;
 }
 
+static inline
+string smakeroom(string s, size_t addroom) {
+    void* h, *new_h;
+    size_t oldlen, newlen, avail, new_hlen;
+    uint8_t old_type, new_type;
+
+    oldlen = sgetlen(s);
+    avail = sgetalloc(s) - oldlen;
+    if (avail >= addroom) return s;
+
+    old_type = s[-1];
+    h = s - getHlen(old_type);
+    printf("the type is %d\n", old_type & H_MASK);
+    printf("Old pointer is %p\n", h);
+    newlen = oldlen + addroom;
+    new_type = getReqType(newlen);
+    new_hlen = getHlen(new_type);
+
+    if (new_type == old_type) {
+        new_h = realloc(h, newlen + 1);
+        if (!new_h) return NULL;
+        s = (string)((uint8_t*)new_h + new_hlen);
+    } else {
+        new_h = malloc(new_hlen + newlen + 1);
+        if (new_h == NULL) return NULL;
+        memcpy((char*)new_h + new_hlen, s, oldlen + 1);
+        free(h);
+        s = (string)((uint8_t*)new_h + new_hlen);
+        s[-1] = (char)new_type;
+        ssetlen(s, oldlen);
+    }
+    printf("new pointer is %p\n", new_h);
+    ssetalloc(s, newlen);
+    return s;
+}
+
 /*
     Create a new null-terminated string with length ilen.
 
@@ -212,6 +248,7 @@ string snew(const void* input) {
 void sfree(const string s) {
     if (s == NULL) return;
     free(s - getHlen(s[-1]));
+    printf("segfaults here\n");
     return;
 }
 
@@ -784,7 +821,7 @@ cleanup:
 }
 
 /*
-    Free the array created by ssplit.
+    Free an array created by ssplit.
 */
 void sfreearr(string* arr, size_t n) {
     if (!arr) return;
@@ -834,4 +871,33 @@ string sreplace(const string s, size_t olen, const char* old, size_t nlen, const
     string res = sjoins(n, split, nlen, new);
     sfreearr(split, n);
     return res;
+}
+
+/*
+    Append a C string to a given string.
+
+    Return NULL if s is NULL.
+    Return NULL and free s if cstr is NULL or has a length of 0.
+    Return NULL and free s if malloc/realloc fails.
+
+    Behaviour is undefined if cstr_len != len(cstr).
+*/
+string scatsc(string s, size_t cstr_len, char* cstr) {
+    if (!s)
+        return NULL;
+    if (!cstr_len || !cstr) {
+        sfree(s);
+        return NULL;
+    }
+    size_t oldlen = sgetlen(s);
+    size_t newlen = oldlen + cstr_len;
+    string new = smakeroom(s, cstr_len);
+    if (!new) {
+        sfree(s);
+        return NULL;
+    }
+    memcpy(new + oldlen, cstr, cstr_len);
+    ssetlen(new, newlen);
+    new[newlen] = 0;
+    return new;
 }
