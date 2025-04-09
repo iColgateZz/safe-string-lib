@@ -258,10 +258,10 @@ void test_sjoins_overflow(void) {
     free(arr);
 }
 
-void test_scat_as_intended(void) {
+void test_scatc_as_intended(void) {
     char* s1 = "Hello";
     char* s2 = "World";
-    string s = scat(s1, s2);
+    string s = scatc(s1, s2);
     assert_equal(s != NULL, "String must not be NULL", __func__);
     assert_equal(strncmp("HelloWorld", s, 11) == 0, "Strings must be equal", __func__);
     assert_equal(sgetlen(s) == 10, "Length is wrong", __func__);
@@ -269,8 +269,8 @@ void test_scat_as_intended(void) {
     sfree(s);
 }
 
-void test_scat_null_passed(void) {
-    string s = scat("Hello", NULL);
+void test_scatc_null_passed(void) {
+    string s = scatc("Hello", NULL);
     assert_equal(s == NULL, "String must be NULL", __func__);
 }
 
@@ -841,54 +841,50 @@ void test_sreplace_as_intended(void) {
     sfree(something);
 }
 
-void test_scatsc_null_input(void) {
-    assert_equal(scatsc(NULL, 1, "/") == NULL, "Must fail", __func__);
+void test_scat_null_input(void) {
+    assert_equal(scat(NULL, 1, "/") == NULL, "Must fail", __func__);
     string s1 = snew("Yeah");
-    assert_equal(scatsc(s1, 0, "/") == NULL, "Must fail 2", __func__);
+    assert_equal(scat(s1, 0, "/") == NULL, "Must fail 2", __func__);
     string s2 = snew("Yeah");
-    assert_equal(scatsc(s2, 1, NULL) == NULL, "Must fail 3", __func__);
+    assert_equal(scat(s2, 1, NULL) == NULL, "Must fail 3", __func__);
 }
 
-void test_scatsc_as_intended(void) {
-    // string new = snew("");
-    // new = scatsc(new, 1, "/");
-    // assert_equal(new != NULL, "Must be a valid pointer", __func__);
-    // assert_equal(strncmp(new, "/", 2) == 0, "Must be equal", __func__);
-    // assert_equal(sgetlen(new) == 1, "Length is not updated", __func__);
-    // assert_equal(new[1] == 0, "Must be null-terminated", __func__);
+void test_scat_as_intended(void) {
+    string new = snew("");
+    new = scat(new, 1, "/");
+    assert_equal(new != NULL, "Must be a valid pointer", __func__);
+    assert_equal(strncmp(new, "/", 2) == 0, "Must be equal", __func__);
+    assert_equal(sgetlen(new) == 1, "Length is not updated", __func__);
+    assert_equal(new[1] == 0, "Must be null-terminated", __func__);
     
-    // for (int i = 0; i < 9; ++i)
-    //     new = scatsc(new, 1, "/");
-    // assert_equal(new != NULL, "Must be a valid pointer 2", __func__);
-    // assert_equal(strncmp(new, "//////////", 11) == 0, "Must be equal 2", __func__);
-    // assert_equal(sgetlen(new) == 10, "Length is not updated 2", __func__);
-    // assert_equal(new[10] == 0, "Must be null-terminated 2", __func__);
-    // sfree(new);
+    for (int i = 0; i < 9; ++i)
+        new = scat(new, 1, "/");
+    assert_equal(new != NULL, "Must be a valid pointer 2", __func__);
+    assert_equal(strncmp(new, "//////////", 11) == 0, "Must be equal 2", __func__);
+    assert_equal(sgetlen(new) == 10, "Length is not updated 2", __func__);
+    assert_equal(new[10] == 0, "Must be null-terminated 2", __func__);
+    sfree(new);
 
-    // string hdr1 = snew("");
-    // // grow to Header type 2
-    // for (int i = 0; i < 10; i++)
-    //     hdr1 = scatsc(hdr1, 10, "abcdefghij");
-    // assert_equal(hdr1 != NULL, "Must be a valid pointer 3", __func__);
-    // // assert_equal(sgetlen(hdr1) == 1000, "Length is not updated 3", __func__);
-    // // assert_equal(hdr1[1000] == 0, "Must be null-terminated 3", __func__);
-    // sfree(hdr1);
+    string hdr1 = snew("");
+    for (int i = 0; i < 100; i++)
+        hdr1 = scat(hdr1, 10, "abcdefghij");
+    assert_equal(hdr1 != NULL, "Must be a valid pointer 3", __func__);
+    assert_equal(sgetlen(hdr1) == 1000, "Length is not updated 3", __func__);
+    assert_equal(hdr1[1000] == 0, "Must be null-terminated 3", __func__);
+    sfree(hdr1);
 
     string w = snewlen(NULL, 250);
-    w = scatsc(w, 10, "abcdefghij");
-    printf("After first call %p\n", (void*)w);
+    w = scat(w, 10, "abcdefghij");
     assert_equal(w != NULL, "Must be a valid pointer 4", __func__);
     assert_equal(sgetlen(w) == 260, "Length is not updated 4", __func__);
     assert_equal(w[260] == 0, "Must be null-terminated 4", __func__);
     assert_equal(w[259] == 'j', "Must be valid", __func__);
-    w = scatsc(w, 10, "abcdefghij");
-    printf("After second call %p\n", (void*)w);
+    w = scat(w, 10, "abcdefghij");
     assert_equal(w != NULL, "Must be a valid pointer 5", __func__);
     assert_equal(sgetlen(w) == 270, "Length is not updated 5", __func__);
     assert_equal(w[270] == 0, "Must be null-terminated 5", __func__);
     assert_equal(w[268] == 'i', "Must be valid", __func__);
     sfree(w);
-    printf("segfault\n");
 }
 
 int main(void) {
@@ -925,8 +921,8 @@ int main(void) {
     test_sjoins_small_n();
     test_sjoins_overflow();
 
-    test_scat_as_intended();
-    test_scat_null_passed();
+    test_scatc_as_intended();
+    test_scatc_null_passed();
 
     test_scats_as_intended();
     test_scats_null_passed();
@@ -985,8 +981,8 @@ int main(void) {
 
     test_sreplace_as_intended();
 
-    test_scatsc_null_input();
-    test_scatsc_as_intended();
+    test_scat_null_input();
+    test_scat_as_intended();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {

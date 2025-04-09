@@ -48,8 +48,9 @@ void supdatelen(const string s);
 string sdup(const string s);
 string sjoin(size_t n, const char* s[n], size_t plen, const char* pattern);
 string sjoins(size_t n, const string s[n], size_t plen, const char* pattern);
-string scat(const char* s1, const char* s2);
+string scatc(const char* s1, const char* s2);
 string scats(const string s1, const string s2);
+string scat(string s, size_t cstr_len, char* cstr);
 bool slower(string s);
 bool supper(string s);
 bool sstartswith(string s, size_t plen, const char* pattern);
@@ -66,6 +67,5 @@ string* ssplit(const string s, size_t seplen, const char* sep, size_t* n);
 void sfreearr(string* arr, size_t n);
 bool sltrimchar(string s, size_t c_size, char* c_arr);
 string sreplace(const string s, size_t olen, const char* old, size_t nlen, const char* new);
-string scatsc(string s, size_t cstr_len, char* cstr);
 
 #endif 

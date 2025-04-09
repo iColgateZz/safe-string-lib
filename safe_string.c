@@ -135,14 +135,12 @@ string smakeroom(string s, size_t addroom) {
 
     old_type = s[-1];
     h = s - getHlen(old_type);
-    printf("the type is %d\n", old_type & H_MASK);
-    printf("Old pointer is %p\n", h);
     newlen = oldlen + addroom;
     new_type = getReqType(newlen);
     new_hlen = getHlen(new_type);
 
     if (new_type == old_type) {
-        new_h = realloc(h, newlen + 1);
+        new_h = realloc(h, new_hlen + newlen + 1);
         if (!new_h) return NULL;
         s = (string)((uint8_t*)new_h + new_hlen);
     } else {
@@ -154,7 +152,6 @@ string smakeroom(string s, size_t addroom) {
         s[-1] = (char)new_type;
         ssetlen(s, oldlen);
     }
-    printf("new pointer is %p\n", new_h);
     ssetalloc(s, newlen);
     return s;
 }
@@ -248,7 +245,6 @@ string snew(const void* input) {
 void sfree(const string s) {
     if (s == NULL) return;
     free(s - getHlen(s[-1]));
-    printf("segfaults here\n");
     return;
 }
 
@@ -405,7 +401,7 @@ string sjoins(size_t n, const string str[n], size_t seplen, const char* sep) {
 
     This function is not binary safe.
 */
-string scat(const char* s1, const char* s2) {
+string scatc(const char* s1, const char* s2) {
     if (s1 == NULL || s2 == NULL) return NULL;
     size_t len1 = strlen(s1);
     size_t len2 = strlen(s2);
@@ -441,6 +437,35 @@ string scats(const string s1, const string s2) {
     memcpy(s + len1, s2, len2);
     s[len1 + len2] = 0;
     return s;
+}
+
+/*
+    Append a C string to a given string.
+
+    Return NULL if s is NULL.
+    Return NULL and free s if cstr is NULL or has a length of 0.
+    Return NULL and free s if malloc/realloc fails.
+
+    Behaviour is undefined if cstr_len != len(cstr).
+*/
+string scat(string s, size_t cstr_len, char* cstr) {
+    if (!s)
+        return NULL;
+    if (!cstr_len || !cstr) {
+        sfree(s);
+        return NULL;
+    }
+    size_t oldlen = sgetlen(s);
+    size_t newlen = oldlen + cstr_len;
+    string new = smakeroom(s, cstr_len);
+    if (!new) {
+        sfree(s);
+        return NULL;
+    }
+    memcpy(new + oldlen, cstr, cstr_len);
+    ssetlen(new, newlen);
+    new[newlen] = 0;
+    return new;
 }
 
 /*
@@ -871,33 +896,4 @@ string sreplace(const string s, size_t olen, const char* old, size_t nlen, const
     string res = sjoins(n, split, nlen, new);
     sfreearr(split, n);
     return res;
-}
-
-/*
-    Append a C string to a given string.
-
-    Return NULL if s is NULL.
-    Return NULL and free s if cstr is NULL or has a length of 0.
-    Return NULL and free s if malloc/realloc fails.
-
-    Behaviour is undefined if cstr_len != len(cstr).
-*/
-string scatsc(string s, size_t cstr_len, char* cstr) {
-    if (!s)
-        return NULL;
-    if (!cstr_len || !cstr) {
-        sfree(s);
-        return NULL;
-    }
-    size_t oldlen = sgetlen(s);
-    size_t newlen = oldlen + cstr_len;
-    string new = smakeroom(s, cstr_len);
-    if (!new) {
-        sfree(s);
-        return NULL;
-    }
-    memcpy(new + oldlen, cstr, cstr_len);
-    ssetlen(new, newlen);
-    new[newlen] = 0;
-    return new;
 }
