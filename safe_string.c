@@ -276,12 +276,10 @@ size_t sgetlen(const string s) {
     Update the lenght of a string in case you changed it manually.
 
     If NULL is passed as an argument, nothing is done.
-
-    This function is not binary safe.
 */
-void supdatelen(const string s) {
+void supdatelen(const string s, size_t len) {
     if (s == NULL) return;
-    ssetlen(s, strlen(s));
+    ssetlen(s, len);
     return;
 }
 

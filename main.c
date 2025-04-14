@@ -107,7 +107,7 @@ void test_supdatelen_as_intended(void) {
     assert_equal(s != NULL, "String is not NULL", __func__);
     assert_equal(sgetlen(s) == 3, "Lengths do not match", __func__);
     s[1] = 0;
-    supdatelen(s);
+    supdatelen(s, strlen(s));
     assert_equal(sgetlen(s) == 1, "Lengths do not match", __func__);
     sfree(s);
 }
@@ -887,6 +887,19 @@ void test_scat_as_intended(void) {
     sfree(w);
 }
 
+void test_scat_as_intended_buf_allocated_before(void) {
+    string buf = snewlen(NULL, 200);
+    supdatelen(buf, 0);
+
+    for (int i = 0; i < 10; i++)
+        scat(buf, 10, "aaabbbcccd");
+    
+    assert_equal(sgetlen(buf) == 100, "Length must be updated", __func__);
+    assert_equal(buf[100] == 0, "Must be null-terminated", __func__);
+    assert_equal(buf[99] == 'd', "Last char check failed", __func__);
+    sfree(buf);
+}
+
 int main(void) {
     printf("Running tests...\n");
 
@@ -983,6 +996,7 @@ int main(void) {
 
     test_scat_null_input();
     test_scat_as_intended();
+    test_scat_as_intended_buf_allocated_before();
 
     printf("\nTests run: %d\nFailures: %d\n", test_count, fail_count);
     if (fail_count == 0) {
